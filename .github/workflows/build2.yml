@@ -72,7 +72,7 @@ jobs:
         with:
           org-name: linglp.test.schemas
           schema-dir: ${{ steps.generate.outputs.schemas }}
-          synapse_auth_token: ${{ secrets.TOKEN }}
+          synapse-auth-token: ${{ secrets.TOKEN }}
 
       # TODO: need to revamp this report, perhaps after we deploy this
       # TODO: we ask for feedback on what would be useful to report.
