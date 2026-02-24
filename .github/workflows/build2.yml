@@ -37,13 +37,7 @@ on:
     types:
       - created 
       - published
-  # TODO: Remove this as the push section is only for testing
-  push:
-    branches:
-      - "*"
-
-
-
+      
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref_name }}-${{ github.triggering_actor }}
   cancel-in-progress: true
