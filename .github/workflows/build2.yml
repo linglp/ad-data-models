@@ -101,6 +101,7 @@ jobs:
           org-name: ${{ steps.resolve-org.outputs.org-name }}
           schema-dir: ${{ steps.generate.outputs.schemas }}
           synapse-auth-token: ${{ secrets.TOKEN }}
+          version: ${{ github.event.release.tag_name }}
 
       # TODO: need to revamp this report, perhaps after we deploy this
       # TODO: we ask for feedback on what would be useful to report.
