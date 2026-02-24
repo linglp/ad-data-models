@@ -89,8 +89,10 @@ jobs:
         run: |
           if [[ "${{ github.event_name }}" == "release" && "${{ github.event.release.draft }}" == "false" ]]; then
             echo "org-name=linglp.test.fakeprod.schemas" >> $GITHUB_OUTPUT
+            echo "🚀 Production: deploying to linglp.test.fakeprod.schemas"
           else
             echo "org-name=linglp.test.schemas" >> $GITHUB_OUTPUT
+            echo "🧪 Test: deploying to linglp.test.schemas"
           fi
 
       # TODO: What happens when the jsonschema organization doesn't exist.
@@ -116,6 +118,7 @@ jobs:
           # Get the schemas-json output
           schemas_json = r'''${{ steps.generate.outputs.schemas-json }}'''
           register_jsonschema = r'''${{ steps.register.outputs.uris }}'''
+          org_name = r'''${{ steps.resolve-org.outputs.org-name }}'''
           print(register_jsonschema)
           try:
               # Handle empty or null output
@@ -135,6 +138,7 @@ jobs:
 
           # Build markdown report with collapsible sections
           report = "## Generated JSON Schemas\n\n"
+          report += f"**Organization:** `{org_name}`\n\n"
           report += f"**Total Schemas Generated:** {len(schemas)}\n\n"
 
           if len(schemas) == 0:
