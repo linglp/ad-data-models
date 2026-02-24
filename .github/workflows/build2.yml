@@ -36,6 +36,7 @@ on:
   release:
     types:
       - published
+      - released
       
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref_name }}-${{ github.triggering_actor }}
@@ -80,9 +81,10 @@ jobs:
       - name: Resolve schema organization
         id: resolve-org
         run: |
-          # Full release (published) → production org
-          # Pre-release or PR to main → test org
-          if [[ "${{ github.event_name }}" == "release" && "${{ github.event.release.prerelease }}" == "false" ]]; then
+          # released → production org (full release published, or pre-release promoted to release)
+          # published → test org (pre-release)
+          # pull_request → test org
+          if [[ "${{ github.event.action }}" == "released" ]]; then
             echo "org-name=linglp.test.fakeprod.schemas" >> $GITHUB_OUTPUT
             echo "🚀 Production: deploying to linglp.test.fakeprod.schemas"
           else
