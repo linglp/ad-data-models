@@ -189,9 +189,16 @@ jobs:
           # Write to file
           with open('schema-report.md', 'w') as f:
               f.write(report)
+
+          # Write to github workflow run summary
+          github_step_summary = os.environ.get('GITHUB_STEP_SUMMARY')
+          if github_step_summary:
+              with open(github_step_summary, 'a') as f:
+                  f.write(report)
           PYTHON
 
       - name: Comment PR with Schema Summary
+        if: github.event_name == 'pull_request'
         uses: mshick/add-pr-comment@v2
         with:
           message-path: schema-report.md
