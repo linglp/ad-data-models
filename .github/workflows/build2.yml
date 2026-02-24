@@ -2,9 +2,9 @@
 # in a Synapse organization, and posts a summary report as a PR comment.
 #
 # Triggered on:
-#   - Pull requests to main (affecting modules/ or AD.model.csv)
-#   - Release created (draft) → registers to test org
-#   - Release published       → registers to production org
+#   - Pull requests to main (affecting modules/ or AD.model.csv) → registers to test org
+#   - Pre-release published                                       → registers to test org
+#   - Full release published                                      → registers to production org
 #
 # Steps:
 #   1. Generate JSON Schemas    - converts AD.model.csv into JSON schema files
@@ -35,7 +35,6 @@ on:
 
   release:
     types:
-      - created 
       - published
       
 concurrency:
@@ -81,7 +80,9 @@ jobs:
       - name: Resolve schema organization
         id: resolve-org
         run: |
-          if [[ "${{ github.event_name }}" == "release" && "${{ github.event.release.draft }}" == "false" ]]; then
+          # Full release (published) → production org
+          # Pre-release or PR to main → test org
+          if [[ "${{ github.event_name }}" == "release" && "${{ github.event.release.prerelease }}" == "false" ]]; then
             echo "org-name=linglp.test.fakeprod.schemas" >> $GITHUB_OUTPUT
             echo "🚀 Production: deploying to linglp.test.fakeprod.schemas"
           else
