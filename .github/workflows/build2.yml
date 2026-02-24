@@ -58,6 +58,12 @@ jobs:
           data-model-source: ./AD.model.csv
           data-model-labels: "display_label"
 
+      - name: Check schemas were generated
+        if: steps.generate.outputs.schemas == ''
+        run: |
+          echo "::error::No schemas were generated from AD.model.csv. Stopping workflow."
+          exit 1
+
       # TODO: update or remove this hack to either make this prettier code
       # TODO: to update schema names or do the schema name standardization
       # TODO: elsehere
@@ -70,7 +76,6 @@ jobs:
 
       - name: Upload schemas as artifacts
         uses: actions/upload-artifact@v6
-        # if: steps.generate.outputs.schemas != ''
         with:
           name: json-schemas
           path: "**/*.json"
@@ -92,15 +97,14 @@ jobs:
             echo "🧪 Test: deploying to linglp.test.schemas"
           fi
 
-      # TODO: What happens when the jsonschema organization doesn't exist.
       - name: Register schemas in Synapse
         id: register
         uses: Sage-Bionetworks-Actions/register-jsonschema@develop
-        # if: steps.generate.outputs.schemas != ''
         with:
           org-name: ${{ steps.resolve-org.outputs.org-name }}
           schema-dir: ${{ steps.generate.outputs.schemas }}
           synapse-auth-token: ${{ secrets.TOKEN }}
+          version: ${{ github.event.release.tag_name }}
 
       # TODO: need to revamp this report, perhaps after we deploy this
       # TODO: we ask for feedback on what would be useful to report.
