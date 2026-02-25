@@ -173,15 +173,10 @@ jobs:
                           report += "\n</details>\n\n"
                           break
           else:
-              # PR triggered: show schema names with links for all registered versions
+              # PR triggered: show schema name and properties only
               for schema in org.get_json_schemas():
                   schema_dict = schema_by_name.get(schema.name, {})
-                  all_versions = schema.get_versions()
-                  version_links = ', '.join(
-                      f"[{v.semantic_version}]({schema_url(org_name, schema.name, v.semantic_version)})"
-                      for v in all_versions
-                  )
-                  report += f"<details>\n<summary><strong>{schema.name}</strong> ({version_links})</summary>\n\n"
+                  report += f"<details>\n<summary><strong>{schema.name}</strong></summary>\n\n"
                   report += render_properties(schema_dict)
                   report += "\n</details>\n\n"
 
