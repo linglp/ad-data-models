@@ -107,68 +107,70 @@ jobs:
           synapse-auth-token: ${{ secrets.TOKEN }}
           version: ${{ github.event.release.tag_name }}
 
-      # TODO: need to revamp this report, perhaps after we deploy this
-      # TODO: we ask for feedback on what would be useful to report.
       - name: Format Schema Report
         id: format
+        env:
+          SYNAPSE_AUTH_TOKEN: ${{ secrets.TOKEN }}
         run: |
+          pip install synapseclient -q
           python - <<'PYTHON'
           import json
-          import sys
           import os
+          from synapseclient import Synapse
+          from synapseclient.models import SchemaOrganization
 
-          # Get the schemas-json output
           schemas_json = r'''${{ steps.generate.outputs.schemas-json }}'''
-          register_jsonschema = r'''${{ steps.register.outputs.uris }}'''
           org_name = r'''${{ steps.resolve-org.outputs.org-name }}'''
-          print(register_jsonschema)
-          schemas = json.loads(schemas_json)
+          release_tag = r'''${{ github.event.release.tag_name }}'''
 
-          # Build markdown report with collapsible sections
+          schemas = json.loads(schemas_json)
+          # Create a mapping of schema name to its JSON definition for lookup
+          schema_by_name = {s.get('title', ''): s for s in schemas}
+
+          syn = Synapse()
+          syn.login()
+          org = SchemaOrganization(name=org_name)
+          org.get(synapse_client=syn)
+
+          def render_properties(schema_dict):
+              result = ""
+              properties = schema_dict.get('properties', {})
+              required_props = schema_dict.get('required', [])
+              if properties:
+                  result += "**Properties:**\n\n"
+                  result += "| Property | Type | Required |\n"
+                  result += "|----------|------|----------|\n"
+                  for prop_name, prop_def in properties.items():
+                      prop_type = prop_def.get('type', 'any')
+                      if isinstance(prop_type, list):
+                          prop_type = ', '.join(prop_type)
+                      is_required = '✓' if prop_name in required_props else ''
+                      result += f"| `{prop_name}` | {prop_type} | {is_required} |\n"
+              return result
+
           report = "## Generated JSON Schemas\n\n"
           report += f"**Organization:** `{org_name}`\n\n"
           report += f"**Total Schemas Generated:** {len(schemas)}\n\n"
 
-          # Create a summary table
-          report += "### Summary\n\n"
-          # TODO: Remove Schema ID and may want to add jsonschema link on synapse instead
-          report += "| Schema Name | Schema ID | Properties Count |\n"
-          report += "|-------------|-----------|------------------|\n"
-
-          for schema in schemas:
-              schema_name = schema.get('title', 'Unnamed Schema')
-              schema_id = schema.get('$id', 'N/A')
-              properties = schema.get('properties', {})
-              prop_count = len(properties)
-              report += f"| {schema_name} | `{schema_id}` | {prop_count} |\n"
-
-          report += "\n### Detailed Schema Information\n\n"
-
-          # Add detailed information for each schema
-          for schema in schemas:
-              schema_name = schema.get('title', 'Unnamed Schema')
-              # TODO: This is weird, we need to look into these schema ids.
-              schema_id = schema.get('$id', 'N/A')
-              schema_description = schema.get('description', 'No description available')
-
-              report += f"<details>\n<summary><strong>{schema_name}</strong></summary>\n\n"
-              report += f"**Schema ID:** `{schema_id}`\n\n"
-              report += f"**Description:** {schema_description}\n\n"
-
-              # Add properties summary
-              properties = schema.get('properties', {})
-              required_props = schema.get('required', [])
-
-              if properties:
-                  report += "**Properties:**\n\n"
-                  report += "| Property | Type | Required |\n"
-                  report += "|----------|------|----------|\n"
-                  for prop_name, prop_def in properties.items():
-                      prop_type = prop_def.get('type', 'any')
-                      is_required = '✓' if prop_name in required_props else ''
-                      report += f"| `{prop_name}` | {prop_type} | {is_required} |\n"
-
-              report += "\n</details>\n\n"
+          if release_tag:
+              # Release triggered: show schemas matching this semantic version with their URI
+              semver = release_tag.lstrip('v')
+              report += f"**Version:** `{release_tag}`\n\n"
+              for schema in org.get_json_schemas():
+                  for version in schema.get_versions():
+                      if version.semantic_version == semver:
+                          schema_dict = schema_by_name.get(schema.name, {})
+                          report += f"<details>\n<summary><strong>{schema.name}</strong> — `{version.id}`</summary>\n\n"
+                          report += render_properties(schema_dict)
+                          report += "\n</details>\n\n"
+                          break
+          else:
+              # PR triggered: show schema names and properties from current generated schemas
+              for schema in org.get_json_schemas():
+                  schema_dict = schema_by_name.get(schema.name, {})
+                  report += f"<details>\n<summary><strong>{schema.name}</strong></summary>\n\n"
+                  report += render_properties(schema_dict)
+                  report += "\n</details>\n\n"
 
           # Write to file
           with open('schema-report.md', 'w') as f:
