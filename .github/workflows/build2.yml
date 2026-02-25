@@ -36,6 +36,11 @@ on:
     types:
       - published
       - released
+
+  push:
+    branches:
+      - "*"
+    
       
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref_name }}-${{ github.triggering_actor }}
