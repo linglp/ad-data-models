@@ -21,7 +21,6 @@
 name: Build v2
 
 on:
-  # only for testing
   pull_request:
     types:
       - opened
@@ -32,10 +31,6 @@ on:
     paths:
       - "modules/**"
       - "AD.model.csv"
-
-  push:
-    branches:
-      - "*"
 
   release:
     types:
