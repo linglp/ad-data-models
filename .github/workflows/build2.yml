@@ -36,11 +36,6 @@ on:
     types:
       - published
       - released
-
-  push:
-    branches:
-      - "*"
-    
       
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref_name }}-${{ github.triggering_actor }}
@@ -84,10 +79,7 @@ jobs:
         with:
           name: json-schemas
           path: "**/*.json"
-          # TODO: fix this output
-          # path: ${{ steps.generate.outputs.schemas-json }}
-          if-no-files-found: warn
-
+          
       - name: Resolve schema organization
         id: resolve-org
         run: |
