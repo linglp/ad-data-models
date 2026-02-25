@@ -128,8 +128,12 @@ jobs:
 
           syn = Synapse()
           syn.login()
+          base_url = syn.repoEndpoint
           org = SchemaOrganization(name=org_name)
           org.get(synapse_client=syn)
+
+          def schema_url(org_name, schema_name, semver):
+              return f"{base_url}/schema/type/registered/{org_name}-{schema_name}-{semver}"
 
           def render_properties(schema_dict):
               result = ""
@@ -152,22 +156,27 @@ jobs:
           report += f"**Total Schemas Generated:** {len(schemas)}\n\n"
 
           if release_tag:
-              # Release triggered: show schemas matching this semantic version with their URI
+              # Release triggered: show schemas matching this semantic version with a link
               semver = release_tag.lstrip('v')
-              report += f"**Version:** `{release_tag}`\n\n"
               for schema in org.get_json_schemas():
                   for version in schema.get_versions():
                       if version.semantic_version == semver:
+                          url = schema_url(org_name, schema.name, semver)
                           schema_dict = schema_by_name.get(schema.name, {})
-                          report += f"<details>\n<summary><strong>{schema.name}</strong> — `{version.id}`</summary>\n\n"
+                          report += f"<details>\n<summary><strong><a href=\"{url}\">{schema.name}</a></strong></summary>\n\n"
                           report += render_properties(schema_dict)
                           report += "\n</details>\n\n"
                           break
           else:
-              # PR triggered: show schema names and properties from current generated schemas
+              # PR triggered: show schema names with links for all registered versions
               for schema in org.get_json_schemas():
                   schema_dict = schema_by_name.get(schema.name, {})
-                  report += f"<details>\n<summary><strong>{schema.name}</strong></summary>\n\n"
+                  all_versions = schema.get_versions()
+                  version_links = ', '.join(
+                      f"[{v.semantic_version}]({schema_url(org_name, schema.name, v.semantic_version)})"
+                      for v in all_versions
+                  )
+                  report += f"<details>\n<summary><strong>{schema.name}</strong> ({version_links})</summary>\n\n"
                   report += render_properties(schema_dict)
                   report += "\n</details>\n\n"
 
