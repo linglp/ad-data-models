@@ -68,7 +68,7 @@ jobs:
         uses: actions/upload-artifact@v6
         with:
           name: json-schemas
-          path: "**/*.json"
+          path: "${{ steps.generate.outputs.schemas }}"
           
       - name: Resolve schema organization
         id: resolve-org
@@ -93,6 +93,11 @@ jobs:
           synapse-auth-token: ${{ secrets.TOKEN }}
           version: ${{ github.event.release.tag_name }}
           fix-schema-name: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
 
       - name: Format Schema Report
         id: format
