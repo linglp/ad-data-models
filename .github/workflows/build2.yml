@@ -50,30 +50,12 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v6
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-
-      - name: assemble csv data model
-        run: python scripts/assemble_csv_data_model.py modules AD.model.csv
-
-      - name: commit csv changes
-        uses: EndBug/add-and-commit@v9
-        with:
-          default_author: github_actions
-          add: 'AD.model.csv'
-          message: "assemble *.model.csv from modules directory"
-          push: true
-
       - name: Generate JSON Schemas
         id: generate
         uses: Sage-Bionetworks-Actions/generate-jsonschema@main
         with:
           data-model-source: ./AD.model.csv
           data-model-labels: "display_label"
-
 
       - name: Check schemas were generated
         if: steps.generate.outputs.schemas-json == '[]'
@@ -117,6 +99,11 @@ jobs:
           synapse-auth-token: ${{ secrets.TOKEN }}
           version: ${{ github.event.release.tag_name }}
           fix-schema-name: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
 
       - name: Format Schema Report
         id: format
