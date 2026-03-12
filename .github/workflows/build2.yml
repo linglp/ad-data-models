@@ -30,7 +30,6 @@ on:
       - "main"
     paths:
       - "modules/**"
-      - "AD.model.csv"
 
   release:
     types:
