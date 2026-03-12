@@ -95,11 +95,11 @@ jobs:
         uses: actions/upload-artifact@v6
         with:
           name: json-schemas
-          path: "${{ steps.resolve-schemas-path.outputs.path }}"
+          path: "${{ steps.resolve-schemas-path.outputs.path }}/**/*.json"
 
       - name: Create release assets
         uses: softprops/action-gh-release@v2
-        if: github.event.action == 'released'
+        if: github.event_name == 'release'
         with:
           files: ${{ steps.resolve-schemas-path.outputs.path }}/**/*.json
           
