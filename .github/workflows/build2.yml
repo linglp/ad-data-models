@@ -135,12 +135,12 @@ jobs:
         run: |
           pip install synapseclient -q
           python - <<'PYTHON'
-          import os
+          import os 
           import tempfile
           from synapseclient import Synapse
           from synapseclient.models import Folder, RecordSet
           from synapseclient.extensions.curator.record_based_metadata_task import extract_schema_properties_from_web
-
+          
           syn = Synapse()
           syn.login()
           project_id = os.environ["SYNAPSE_PROJECT_ID"]
@@ -152,17 +152,10 @@ jobs:
 
           for schema_uri in json_schema_uris.splitlines():
               schema_uri = schema_uri.strip()
-              if not schema_uri:
-                  continue
 
               # Strip the org prefix to get "SchemaName" (PR) or "SchemaName-1.0.0" (release),
               # then take the first segment to isolate just the schema name.
               data_type = schema_uri.removeprefix(f"{org_name}-").split("-")[0]
-
-              # Only create RecordSets for template schemas; skip individual attribute schemas
-              # (e.g. age, sex, diagnosis) which are not meant for data contributors to fill in.
-              if not data_type.endswith("_template"):
-                  continue
 
               # Fetch the schema columns from Synapse to use as the RecordSet structure
               template_df = extract_schema_properties_from_web(syn, schema_uri)
@@ -185,9 +178,9 @@ jobs:
                   ).store(synapse_client=syn)
               else:
                   # For PR runs, create/overwrite a single unversioned folder
+                  folder = Folder(name=f"{data_type}", parent_id=project_id).store()
                   tmp_path = f"/tmp/{data_type}.csv"
                   template_df.to_csv(tmp_path, index=False)
-                  folder = Folder(name=f"{data_type}", parent_id=project_id).store()
                   record_set = RecordSet(
                       name="Template",
                       description=f"Template for {data_type}",
