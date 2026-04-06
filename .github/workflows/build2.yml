@@ -28,8 +28,8 @@ on:
       - labeled
     branches:
       - "main"
-    # paths:
-    #   - "modules/**"
+    paths:
+      - "modules/**"
 
   release:
     types:
@@ -129,7 +129,7 @@ jobs:
           version: ${{ github.event.release.tag_name }}
           fix-schema-name: true
 
-      - name: Create recordsets
+      - name: Create recordsets and bind schemas
         env:
           SYNAPSE_AUTH_TOKEN: ${{ secrets.TOKEN }}
         run: |
